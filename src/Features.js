@@ -3,7 +3,7 @@ let ftCanvas = document.createElement('canvas');
 
 export const Features = (function () {
 
-	let gl = ftCanvas.getContext('webgl') || ftCanvas.getContext('experimental-webgl');
+	let gl = ftCanvas.getContext('webgl2');
 	if (gl === null){ 
 		return null; 
 	}
@@ -35,7 +35,6 @@ export const Features = (function () {
 			isSupported: function () {
 				let supported = true;
 
-				supported = supported && gl.getExtension('EXT_frag_depth');
 				supported = supported && gl.getParameter(gl.MAX_VARYING_VECTORS) >= 8;
 
 				return supported;
@@ -45,8 +44,8 @@ export const Features = (function () {
 			isSupported: function () {
 				let supported = true;
 
-				supported = supported && gl.getExtension('EXT_frag_depth');
-				supported = supported && gl.getExtension('OES_texture_float');
+				// WebGL2: float textures are core, no extension needed
+				supported = supported && (gl instanceof WebGL2RenderingContext || gl.getExtension('OES_texture_float'));
 				supported = supported && gl.getParameter(gl.MAX_VARYING_VECTORS) >= 8;
 
 				return supported;
@@ -57,11 +56,9 @@ export const Features = (function () {
 			isSupported: function () {
 				let supported = true;
 
-				supported = supported && gl.getExtension('EXT_frag_depth');
-				supported = supported && gl.getExtension('OES_texture_float');
+				// WebGL2: float textures are core, no extension needed
+				supported = supported && (gl instanceof WebGL2RenderingContext || gl.getExtension('OES_texture_float'));
 				supported = supported && gl.getParameter(gl.MAX_VARYING_VECTORS) >= 8;
-
-				//supported = supported || (gl instanceof WebGL2RenderingContext);
 
 				return supported;
 			}

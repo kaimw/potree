@@ -138,6 +138,7 @@ export class Viewer extends EventDispatcher{
 		this.edlOpacity = 1.0;
 		this.useEDL = false;
 		this.useHQ = false;
+		this.hqAlphaEnabled = true;
 		this.description = "";
 
 		this.classifications = ClassificationScheme.DEFAULT;
@@ -606,7 +607,8 @@ export class Viewer extends EventDispatcher{
 	};
 
 	setEDLEnabled (value) {
-		value = Boolean(value) && Features.SHADER_EDL.isSupported();
+		const useWebGPU = (this.renderBackend === 'webgpu' || (this.renderBackend === 'auto' && Features.WEBGPU.isSupported()));
+		value = Boolean(value) && (useWebGPU || Features.SHADER_EDL.isSupported());
 
 		if (this.useEDL !== value) {
 			this.useEDL = value;
@@ -619,7 +621,8 @@ export class Viewer extends EventDispatcher{
 	};
 
 	setHQEnabled (value) {
-		value = Boolean(value) && Features.SHADER_SPLATS.isSupported();
+		const useWebGPU = (this.renderBackend === 'webgpu' || (this.renderBackend === 'auto' && Features.WEBGPU.isSupported()));
+		value = Boolean(value) && (useWebGPU || Features.SHADER_SPLATS.isSupported());
 
 		if (this.useHQ !== value) {
 			this.useHQ = value;
@@ -1110,6 +1113,10 @@ export class Viewer extends EventDispatcher{
 			this.setQuality(quality);
 		}
 
+		if (Utils.getParameterByName('hqAlpha')) {
+			this.hqAlphaEnabled = Utils.getParameterByName('hqAlpha') === 'true';
+		}
+
 		if (Utils.getParameterByName('position')) {
 			let value = Utils.getParameterByName('position');
 			value = value.replace('[', '').replace(']', '');
@@ -1482,7 +1489,7 @@ export class Viewer extends EventDispatcher{
 
 		let canvas = document.createElement("canvas");
 
-		let context = canvas.getContext('webgl', contextAttributes );
+		let context = canvas.getContext('webgl2', contextAttributes );
 
 		this.renderer = new THREE.WebGLRenderer({
 			alpha: true, 
@@ -1501,23 +1508,10 @@ export class Viewer extends EventDispatcher{
 		});
 		//this.renderer.domElement.focus();
 
-		// NOTE: If extension errors occur, pass the string into this.renderer.extensions.get(x) before enabling
-		// enable frag_depth extension for the interpolation shader, if available
+		// WebGL2: gl_FragDepth is built-in, depth textures are core, VAOs are core
 		let gl = this.renderer.getContext();
-		gl.getExtension('EXT_frag_depth');
-		gl.getExtension('WEBGL_depth_texture');
-		gl.getExtension('WEBGL_color_buffer_float'); 	// Enable explicitly for more portability, EXT_color_buffer_float is the proper name in WebGL 2
-		
-		if(gl.createVertexArray == null){
-			let extVAO = gl.getExtension('OES_vertex_array_object');
-
-			if(!extVAO){
-				throw new Error("OES_vertex_array_object extension not supported");
-			}
-
-			gl.createVertexArray = extVAO.createVertexArrayOES.bind(extVAO);
-			gl.bindVertexArray = extVAO.bindVertexArrayOES.bind(extVAO);
-		}
+		gl.getExtension('EXT_color_buffer_float');
+		gl.getExtension('EXT_float_blend');
 		
 	}
 

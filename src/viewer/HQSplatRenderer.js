@@ -190,7 +190,7 @@ export class HQSplatRenderer{
 				attributeMaterial.pointSizeType = material.pointSizeType;
 				attributeMaterial.activeAttributeName = material.activeAttributeName;
 				attributeMaterial.visibleNodesTexture = material.visibleNodesTexture;
-				attributeMaterial.weighted = true;
+				attributeMaterial.weighted = viewer.hqAlphaEnabled;
 				attributeMaterial.screenWidth = width;
 				attributeMaterial.screenHeight = height;
 				attributeMaterial.shape = PointShape.CIRCLE;
@@ -243,10 +243,8 @@ export class HQSplatRenderer{
 			viewer.renderer.setRenderTarget(null);
 			viewer.pRenderer.render(viewer.scene.scenePointCloud, camera, this.rtAttribute, {
 				clipSpheres: viewer.scene.volumes.filter(v => (v instanceof SphereVolume)),
-				//material: this.attributeMaterial,
-				blendFunc: [gl.SRC_ALPHA, gl.ONE],
-				//depthTest: false,
-				depthWrite: false
+				blendFunc: viewer.hqAlphaEnabled ? [gl.SRC_ALPHA, gl.ONE] : [gl.ONE, gl.ZERO],
+				depthWrite: !viewer.hqAlphaEnabled
 			});
 		}
 
@@ -295,7 +293,18 @@ export class HQSplatRenderer{
 
 			normalizationMaterial.uniforms.uWeightMap.value = this.rtAttribute.texture;
 			normalizationMaterial.uniforms.uDepthMap.value = this.rtDepth.depthTexture;
-
+			if (viewer.hqAlphaEnabled) {
+				normalizationMaterial.transparent = true;
+			} else {
+				normalizationMaterial.transparent = false;
+				normalizationMaterial.blending = THREE.NoBlending;
+				normalizationMaterial.depthWrite = true;
+				normalizationMaterial.depthTest = true;
+				normalizationMaterial.depthFunc = THREE.LessEqualDepth;
+				normalizationMaterial.needsUpdate = true;
+				// Reset stale blend state from PotreeRenderer attribute pass
+				viewer.renderer.state.reset();
+			}
 			Utils.screenPass.render(viewer.renderer, normalizationMaterial);
 		}
 

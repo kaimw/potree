@@ -1,22 +1,22 @@
-
+#version 300 es
 precision highp float;
 precision highp int;
 
 #define max_clip_polygons 8
 #define PI 3.141592653589793
 
-attribute vec3 position;
-attribute vec3 color;
-attribute float intensity;
-attribute float classification;
-attribute float returnNumber;
-attribute float numberOfReturns;
-attribute float pointSourceID;
-attribute vec4 indices;
-attribute float spacing;
-attribute float gpsTime;
-attribute vec3 normal;
-attribute float aExtra;
+in vec3 position;
+in vec3 color;
+in float intensity;
+in float classification;
+in float returnNumber;
+in float numberOfReturns;
+in float pointSourceID;
+in vec4 indices;
+in float spacing;
+in float gpsTime;
+in vec3 normal;
+in float aExtra;
 
 uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
@@ -123,14 +123,14 @@ uniform mat4 uShadowWorldView[num_shadowmaps];
 uniform mat4 uShadowProj[num_shadowmaps];
 #endif
 
-varying vec3	vColor;
-varying float	vLogDepth;
-varying vec3	vViewPosition;
-varying float 	vRadius;
-varying float 	vPointSize;
+out vec3	vColor;
+out float	vLogDepth;
+out vec3	vViewPosition;
+out float 	vRadius;
+out float 	vPointSize;
 
 
-float round(float number){
+float customRound(float number){
 	return floor(number + 0.5);
 }
 
@@ -223,15 +223,15 @@ float getLOD(){
 		
 		vec3 index3d = (position-offset) / nodeSizeAtLevel;
 		index3d = floor(index3d + 0.5);
-		int index = int(round(4.0 * index3d.x + 2.0 * index3d.y + index3d.z));
+		int index = int(customRound(4.0 * index3d.x + 2.0 * index3d.y + index3d.z));
 		
-		vec4 value = texture2D(visibleNodes, vec2(float(iOffset) / 2048.0, 0.0));
-		int mask = int(round(value.r * 255.0));
+		vec4 value = texture(visibleNodes, vec2(float(iOffset) / 2048.0, 0.0));
+		int mask = int(customRound(value.r * 255.0));
 
 		if(isBitSet(mask, index)){
 			// there are more visible child nodes at this position
-			int advanceG = int(round(value.g * 255.0)) * 256;
-			int advanceB = int(round(value.b * 255.0));
+			int advanceG = int(customRound(value.g * 255.0)) * 256;
+			int advanceB = int(customRound(value.b * 255.0));
 			int advanceChild = numberOfOnes(mask, index - 1);
 			int advance = advanceG + advanceB + advanceChild;
 
@@ -263,10 +263,10 @@ float getSpacing(){
 		
 		vec3 index3d = (position-offset) / nodeSizeAtLevel;
 		index3d = floor(index3d + 0.5);
-		int index = int(round(4.0 * index3d.x + 2.0 * index3d.y + index3d.z));
+		int index = int(customRound(4.0 * index3d.x + 2.0 * index3d.y + index3d.z));
 		
-		vec4 value = texture2D(visibleNodes, vec2(float(iOffset) / 2048.0, 0.0));
-		int mask = int(round(value.r * 255.0));
+		vec4 value = texture(visibleNodes, vec2(float(iOffset) / 2048.0, 0.0));
+		int mask = int(customRound(value.r * 255.0));
 		float spacingFactor = value.a;
 
 		if(i > 0.0){
@@ -276,8 +276,8 @@ float getSpacing(){
 
 		if(isBitSet(mask, index)){
 			// there are more visible child nodes at this position
-			int advanceG = int(round(value.g * 255.0)) * 256;
-			int advanceB = int(round(value.b * 255.0));
+			int advanceG = int(customRound(value.g * 255.0)) * 256;
+			int advanceB = int(customRound(value.b * 255.0));
 			int advanceChild = numberOfOnes(mask, index - 1);
 			int advance = advanceG + advanceB + advanceChild;
 
@@ -323,7 +323,7 @@ float getLOD(){
 		
 	for(float i = 0.0; i <= 1000.0; i++){
 		
-		vec4 value = texture2D(visibleNodes, vec2(iOffset / 2048.0, 0.0));
+		vec4 value = texture(visibleNodes, vec2(iOffset / 2048.0, 0.0));
 		
 		int children = int(value.r * 255.0);
 		float next = value.g * 255.0;
@@ -420,13 +420,13 @@ vec3 getGpsTime(){
 	float w = (gpsTime + uGpsOffset) * uGpsScale;
 
 
-	vec3 c = texture2D(gradient, vec2(w, 1.0 - w)).rgb;
+	vec3 c = texture(gradient, vec2(w, 1.0 - w)).rgb;
 
 
 	// vec2 r = uNormalizedGpsBufferRange;
 	// float w = gpsTime * (r.y - r.x) + r.x;
 	// w = clamp(w, 0.0, 1.0);
-	// vec3 c = texture2D(gradient, vec2(w,1.0-w)).rgb;
+	// vec3 c = texture(gradient, vec2(w,1.0-w)).rgb;
 	
 	return c;
 }
@@ -434,14 +434,14 @@ vec3 getGpsTime(){
 vec3 getElevation(){
 	vec4 world = modelMatrix * vec4( position, 1.0 );
 	float w = (world.z - elevationRange.x) / (elevationRange.y - elevationRange.x);
-	vec3 cElevation = texture2D(gradient, vec2(w,1.0-w)).rgb;
+	vec3 cElevation = texture(gradient, vec2(w,1.0-w)).rgb;
 	
 	return cElevation;
 }
 
 vec4 getClassification(){
 	vec2 uv = vec2(classification / 255.0, 0.5);
-	vec4 classColor = texture2D(classificationLUT, uv);
+	vec4 classColor = texture(classificationLUT, uv);
 	
 	return classColor;
 }
@@ -505,14 +505,14 @@ vec3 getNumberOfReturns(){
 
 	float w = value / 6.0;
 
-	vec3 color = texture2D(gradient, vec2(w, 1.0 - w)).rgb;
+	vec3 color = texture(gradient, vec2(w, 1.0 - w)).rgb;
 
 	return color;
 }
 
 vec3 getSourceID(){
 	float w = mod(pointSourceID, 10.0) / 10.0;
-	return texture2D(gradient, vec2(w,1.0 - w)).rgb;
+	return texture(gradient, vec2(w,1.0 - w)).rgb;
 }
 
 vec3 getCompositeColor(){
@@ -576,7 +576,7 @@ vec3 getMatcap(){
 	vec3 r_en = reflect( eye, getNormal() ); // or r_en = e - 2. * dot( n, e ) * n;
 	float m = 2. * sqrt(pow( r_en.x, 2. ) + pow( r_en.y, 2. ) + pow( r_en.z + 1., 2. ));
 	vec2 vN = r_en.xy / m + .5;
-	return texture2D(matcapTextureUniform, vN).rgb; 
+	return texture(matcapTextureUniform, vN).rgb; 
 }
 #endif
 
@@ -585,7 +585,7 @@ vec3 getExtra(){
 	float w = (aExtra + uExtraOffset) * uExtraScale;
 	w = clamp(w, 0.0, 1.0);
 
-	vec3 color = texture2D(gradient, vec2(w,1.0-w)).rgb;
+	vec3 color = texture(gradient, vec2(w,1.0-w)).rgb;
 
 	// vec2 r = uExtraNormalizedRange;
 
@@ -595,7 +595,7 @@ vec3 getExtra(){
 
 	// w = clamp(w, 0.0, 1.0);
 
-	// vec3 color = texture2D(gradient, vec2(w,1.0-w)).rgb;
+	// vec3 color = texture(gradient, vec2(w,1.0-w)).rgb;
 
 	return color;
 }
@@ -622,13 +622,13 @@ vec3 getColor(){
 		color = getGpsTime();
 	#elif defined color_type_intensity_gradient
 		float w = getIntensity();
-		color = texture2D(gradient, vec2(w,1.0-w)).rgb;
+		color = texture(gradient, vec2(w,1.0-w)).rgb;
 	#elif defined color_type_color
 		color = uColor;
 	#elif defined color_type_level_of_detail
 		float depth = getLOD();
 		float w = depth / 10.0;
-		color = texture2D(gradient, vec2(w,1.0-w)).rgb;
+		color = texture(gradient, vec2(w,1.0-w)).rgb;
 	#elif defined color_type_indices
 		color = indices.rgb;
 	#elif defined color_type_classification
@@ -921,7 +921,7 @@ void main() {
 
 			if(distance < 1.0){
 				float w = distance;
-				vec3 cGradient = texture2D(gradient, vec2(w, 1.0 - w)).rgb;
+				vec3 cGradient = texture(gradient, vec2(w, 1.0 - w)).rgb;
 				
 				vColor = cGradient;
 				//vColor = cGradient * 0.7 + vColor * 0.3;
@@ -963,7 +963,7 @@ void main() {
 			float bias = vRadius * 2.0;
 
 			for(int j = 0; j < 9; j++){
-				vec4 depthMapValue = texture2D(uShadowMap[i], vec2(u, v) + sampleLocations[j]);
+				vec4 depthMapValue = texture(uShadowMap[i], vec2(u, v) + sampleLocations[j]);
 
 				float linearDepthFromSM = depthMapValue.x + bias;
 				float linearDepthFromViewer = distanceToLight;

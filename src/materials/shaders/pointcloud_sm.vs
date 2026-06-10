@@ -1,9 +1,9 @@
-
+#version 300 es
 precision mediump float;
 precision mediump int;
 
-attribute vec3 position;
-attribute vec3 color;
+in vec3 position;
+in vec3 color;
 
 uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
@@ -22,8 +22,8 @@ uniform float uVNStart;
 
 uniform sampler2D visibleNodes;
 
-varying float vLinearDepth;
-varying vec3 vColor;
+out float vLinearDepth;
+out vec3 vColor;
 
 #define PI 3.141592653589793
 
@@ -77,7 +77,7 @@ float getLOD(){
 		index3d = floor(index3d + 0.5);
 		float index = 4.0 * index3d.x + 2.0 * index3d.y + index3d.z;
 		
-		vec4 value = texture2D(visibleNodes, vec2(iOffset / 2048.0, 0.0));
+		vec4 value = texture(visibleNodes, vec2(iOffset / 2048.0, 0.0));
 		float mask = value.r * 255.0;
 		if(isBitSet(mask, index)){
 			// there are more visible child nodes at this position

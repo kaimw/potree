@@ -36,17 +36,22 @@ function paramThreeToGL(_gl, p) {
 
 	if (p === THREE.HalfFloatType) {
 
+		// WebGL2: HALF_FLOAT is core
+		if (typeof _gl.HALF_FLOAT !== 'undefined') {
+			return _gl.HALF_FLOAT;
+		}
+
 		extension = extensions.get('OES_texture_half_float');
 
 		if (extension !== null) return extension.HALF_FLOAT_OES;
 
 	}
 
-	if (p === THREE.AlphaFormat) return _gl.ALPHA;
+	if (p === THREE.AlphaFormat) return typeof _gl.ALPHA !== 'undefined' ? _gl.ALPHA : _gl.RED;
 	if (p === THREE.RGBFormat) return _gl.RGB;
 	if (p === THREE.RGBAFormat) return _gl.RGBA;
-	if (p === THREE.LuminanceFormat) return _gl.LUMINANCE;
-	if (p === THREE.LuminanceAlphaFormat) return _gl.LUMINANCE_ALPHA;
+	if (p === THREE.LuminanceFormat) return typeof _gl.LUMINANCE !== 'undefined' ? _gl.LUMINANCE : _gl.RED;
+	if (p === THREE.LuminanceAlphaFormat) return typeof _gl.LUMINANCE_ALPHA !== 'undefined' ? _gl.LUMINANCE_ALPHA : _gl.RG;
 	if (p === THREE.DepthFormat) return _gl.DEPTH_COMPONENT;
 	if (p === THREE.DepthStencilFormat) return _gl.DEPTH_STENCIL;
 
@@ -121,6 +126,11 @@ function paramThreeToGL(_gl, p) {
 	}
 
 	if (p === UnsignedInt248Type) {
+
+		// WebGL2: UNSIGNED_INT_24_8 is core
+		if (typeof _gl.UNSIGNED_INT_24_8 !== 'undefined') {
+			return _gl.UNSIGNED_INT_24_8;
+		}
 
 		extension = extensions.get('WEBGL_depth_texture');
 

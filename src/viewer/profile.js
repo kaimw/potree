@@ -661,21 +661,8 @@ export class ProfileWindow extends EventDispatcher {
 		$(this.renderer.domElement).css('height', '100%');
 
 
-		{
-			let gl = this.renderer.getContext();
-
-			if(gl.createVertexArray == null){
-				let extVAO = gl.getExtension('OES_vertex_array_object');
-
-				if(!extVAO){
-					throw new Error("OES_vertex_array_object extension not supported");
-				}
-
-				gl.createVertexArray = extVAO.createVertexArrayOES.bind(extVAO);
-				gl.bindVertexArray = extVAO.bindVertexArrayOES.bind(extVAO);
-			}
-			
-		}
+		// WebGL2: VAOs are core, no extension needed
+		let gl = this.renderer.getContext();
 
 		this.camera = new THREE.OrthographicCamera(-1000, 1000, 1000, -1000, -1000, 1000);
 		this.camera.up.set(0, 0, 1);

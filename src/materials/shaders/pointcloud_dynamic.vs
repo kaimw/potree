@@ -1,15 +1,15 @@
-
+#version 300 es
 precision highp float;
 precision highp int;
 
 #define PI 3.141592653589793
 
-attribute vec3 position;
+in vec3 position;
 
 // DYNAMIC LIST OF ATTRIBUTES IN USE
 #define NUM_ATTRIBUTES
 
-attribute float attribute_0;
+in float attribute_0;
 
 uniform float uAttribute_w[NUM_ATTRIBUTES];      // composite weight
 uniform vec3  uAttribute_gbc[NUM_ATTRIBUTES];    // gamma, brightness, contrast
@@ -28,7 +28,7 @@ uniform mat4 uViewInv;
 uniform sampler2D gradient;
 uniform sampler2D classificationLUT;
 
-varying vec3 vColor;
+out vec3 vColor;
 
 vec4 getColor(float value, int index){
 

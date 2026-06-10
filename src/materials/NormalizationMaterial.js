@@ -14,8 +14,8 @@ export class NormalizationMaterial extends THREE.RawShaderMaterial{
 
 		this.setValues({
 			uniforms: uniforms,
-			vertexShader: this.getDefines() + Shaders['normalize.vs'],
-			fragmentShader: this.getDefines() + Shaders['normalize.fs'],
+			vertexShader: Shaders['normalize.vs'].replace(/(#version .*)/, '$1\n' + this.getDefines()),
+			fragmentShader: Shaders['normalize.fs'].replace(/(#version .*)/, '$1\n' + this.getDefines()),
 		});
 	}
 
@@ -27,8 +27,8 @@ export class NormalizationMaterial extends THREE.RawShaderMaterial{
 
 	updateShaderSource() {
 
-		let vs = this.getDefines() + Shaders['normalize.vs'];
-		let fs = this.getDefines() + Shaders['normalize.fs'];
+		let vs = Shaders['normalize.vs'].replace(/(#version .*)/, '$1\n' + this.getDefines());
+		let fs = Shaders['normalize.fs'].replace(/(#version .*)/, '$1\n' + this.getDefines());
 
 		this.setValues({
 			vertexShader: vs,

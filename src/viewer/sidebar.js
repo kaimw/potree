@@ -1541,7 +1541,8 @@ export class Sidebar{
 			let elSplatQuality = $("#splat_quality_options");
 			elSplatQuality.selectgroup({title: "Splat Quality"});
 
-			if(!Features.SHADER_SPLATS.isSupported()){
+			const useWebGPU = (this.viewer.renderBackend === 'webgpu' || (this.viewer.renderBackend === 'auto' && Features.WEBGPU.isSupported()));
+			if(!useWebGPU && !Features.SHADER_SPLATS.isSupported()){
 				elSplatQuality.find("input[value=hq]").prop("disabled", true);
 			}
 
