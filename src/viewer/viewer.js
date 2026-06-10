@@ -136,6 +136,7 @@ export class Viewer extends EventDispatcher{
 		this.edlRadius = 1.4;
 		this.edlOpacity = 1.0;
 		this.useEDL = false;
+		this.useHQ = false;
 		this.description = "";
 
 		this.classifications = ClassificationScheme.DEFAULT;
@@ -612,6 +613,19 @@ export class Viewer extends EventDispatcher{
 
 	getEDLEnabled () {
 		return this.useEDL;
+	};
+
+	setHQEnabled (value) {
+		value = Boolean(value) && Features.SHADER_SPLATS.isSupported();
+
+		if (this.useHQ !== value) {
+			this.useHQ = value;
+			this.dispatchEvent({'type': 'use_hq_changed', 'viewer': this});
+		}
+	};
+
+	getHQEnabled () {
+		return this.useHQ;
 	};
 
 	setEDLRadius (value) {
@@ -1894,7 +1908,7 @@ export class Viewer extends EventDispatcher{
 	}
 
 	getPRenderer(){
-		if(this.useHQ){
+		if(this.useHQ && Features.SHADER_SPLATS.isSupported()){
 			if (!this.hqRenderer) {
 				this.hqRenderer = new HQSplatRenderer(this);
 			}

@@ -16,6 +16,7 @@ import {CameraAnimation} from "../modules/CameraAnimation/CameraAnimation.js"
 import {HierarchicalSlider} from "./HierarchicalSlider.js"
 import {OrientedImage} from "../modules/OrientedImages/OrientedImages.js";
 import {Images360} from "../modules/Images360/Images360.js";
+import {Features} from "../Features.js";
 
 import JSON5 from "../../libs/json5-2.1.3/json5.mjs";
 
@@ -1540,11 +1541,15 @@ export class Sidebar{
 			let elSplatQuality = $("#splat_quality_options");
 			elSplatQuality.selectgroup({title: "Splat Quality"});
 
+			if(!Features.SHADER_SPLATS.isSupported()){
+				elSplatQuality.find("input[value=hq]").prop("disabled", true);
+			}
+
 			elSplatQuality.find("input").click( (e) => {
 				if(e.target.value === "standard"){
-					this.viewer.useHQ = false;
+					this.viewer.setHQEnabled(false);
 				}else if(e.target.value === "hq"){
-					this.viewer.useHQ = true;
+					this.viewer.setHQEnabled(true);
 				}
 			});
 

@@ -1028,7 +1028,9 @@ export class Renderer {
 			}
 
 			let numPoints = webglBuffer.numElements;
-			gl.drawArrays(gl.POINTS, 0, numPoints);
+			if (numPoints > 0) {
+				gl.drawArrays(gl.POINTS, 0, numPoints);
+			}
 
 			i++;
 		}
@@ -1063,6 +1065,7 @@ export class Renderer {
 		let visibilityTextureData = null;
 
 		let currentTextureBindingPoint = 0;
+		let lastTextureBindingPoint = -1;
 
 		if (material.pointSizeType >= 0) {
 			if (material.pointSizeType === PointSizeType.ADAPTIVE ||
@@ -1230,7 +1233,7 @@ export class Renderer {
 
 			shader.setUniform1f("uScreenWidth", screenWidth);
 			shader.setUniform1f("uScreenHeight", screenHeight);
-			shader.setUniform1f("fov", Math.PI * camera.fov / 180);
+			shader.setUniform1f("fov", camera.fov ? Math.PI * camera.fov / 180 : 1.0);
 			shader.setUniform1f("near", camera.near);
 			shader.setUniform1f("far", camera.far);
 			
@@ -1336,6 +1339,7 @@ export class Renderer {
 				shader.setUniform1i("visibleNodesTexture", currentTextureBindingPoint);
 				gl.activeTexture(gl.TEXTURE0 + currentTextureBindingPoint);
 				gl.bindTexture(vnWebGLTexture.target, vnWebGLTexture.id);
+				lastTextureBindingPoint = currentTextureBindingPoint;
 				currentTextureBindingPoint++;
 			}
 
@@ -1343,6 +1347,7 @@ export class Renderer {
 			shader.setUniform1i("gradient", currentTextureBindingPoint);
 			gl.activeTexture(gl.TEXTURE0 + currentTextureBindingPoint);
 			gl.bindTexture(gradientTexture.target, gradientTexture.id);
+			lastTextureBindingPoint = currentTextureBindingPoint;
 
 			const repeat = material.elevationGradientRepeat;
 			if(repeat === ElevationGradientRepeat.REPEAT){
@@ -1361,12 +1366,14 @@ export class Renderer {
 			shader.setUniform1i("classificationLUT", currentTextureBindingPoint);
 			gl.activeTexture(gl.TEXTURE0 + currentTextureBindingPoint);
 			gl.bindTexture(classificationTexture.target, classificationTexture.id);
+			lastTextureBindingPoint = currentTextureBindingPoint;
 			currentTextureBindingPoint++;
 
 			let matcapTexture = this.textures.get(material.matcapTexture);
 			shader.setUniform1i("matcapTextureUniform", currentTextureBindingPoint);
 			gl.activeTexture(gl.TEXTURE0 + currentTextureBindingPoint);
 			gl.bindTexture(matcapTexture.target, matcapTexture.id);
+			lastTextureBindingPoint = currentTextureBindingPoint;
 			currentTextureBindingPoint++;
 
 
@@ -1402,9 +1409,11 @@ export class Renderer {
 
 						gl.activeTexture(gl[`TEXTURE${bindingPoint}`]);
 						gl.bindTexture(gl.TEXTURE_2D, snapTexture);
+						lastTextureBindingPoint = Math.max(lastTextureBindingPoint, bindingPoint);
 
 						gl.activeTexture(gl[`TEXTURE${depthBindingPoint}`]);
 						gl.bindTexture(gl.TEXTURE_2D, snapTextureDepth);
+						lastTextureBindingPoint = Math.max(lastTextureBindingPoint, depthBindingPoint);
 					}
 				}
 
@@ -1434,9 +1443,13 @@ export class Renderer {
 
 		this.renderNodes(octree, nodes, visibilityTextureData, camera, target, shader, params);
 
-		gl.activeTexture(gl.TEXTURE2);
-		gl.bindTexture(gl.TEXTURE_2D, null);
-		gl.activeTexture(gl.TEXTURE0);
+		if (lastTextureBindingPoint >= 0) {
+			for (let ti = 0; ti <= lastTextureBindingPoint; ti++) {
+				gl.activeTexture(gl.TEXTURE0 + ti);
+				gl.bindTexture(gl.TEXTURE_2D, null);
+			}
+			gl.activeTexture(gl.TEXTURE0);
+		}
 	}
 
 	render(scene, camera, target = null, params = {}) {

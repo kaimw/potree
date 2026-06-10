@@ -666,8 +666,13 @@ vec3 getColor(){
 float getPointSize(){
 	float pointSize = 1.0;
 	
-	float slope = tan(fov / 2.0);
-	float projFactor = -0.5 * uScreenHeight / (slope * vViewPosition.z);
+	float projFactor;
+	if (uUseOrthographicCamera) {
+		projFactor = uScreenWidth / uOrthoWidth;
+	} else {
+		float slope = tan(fov / 2.0);
+		projFactor = -0.5 * uScreenHeight / (slope * vViewPosition.z);
+	}
 
 	float scale = length(
 		modelViewMatrix * vec4(0, 0, 0, 1) - 
@@ -863,7 +868,7 @@ void main() {
 	vec4 mvPosition = modelViewMatrix * vec4(position, 1.0 );
 	vViewPosition = mvPosition.xyz;
 	gl_Position = projectionMatrix * mvPosition;
-	vLogDepth = log2(-mvPosition.z);
+	vLogDepth = log2(max(1e-7, -mvPosition.z));
 
 	//gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
 	//gl_PointSize = 5.0;
@@ -891,12 +896,17 @@ void main() {
 
 
 	#if defined hq_depth_pass
-		float originalDepth = gl_Position.w;
-		float adjustedDepth = originalDepth + 2.0 * vRadius;
-		float adjust = adjustedDepth / originalDepth;
+		if (uUseOrthographicCamera) {
+			mvPosition.z -= 2.0 * vRadius;
+			gl_Position = projectionMatrix * mvPosition;
+		} else {
+			float originalDepth = gl_Position.w;
+			float adjustedDepth = originalDepth + 2.0 * vRadius;
+			float adjust = adjustedDepth / originalDepth;
 
-		mvPosition.xyz = mvPosition.xyz * adjust;
-		gl_Position = projectionMatrix * mvPosition;
+			mvPosition.xyz = mvPosition.xyz * adjust;
+			gl_Position = projectionMatrix * mvPosition;
+		}
 	#endif
 
 

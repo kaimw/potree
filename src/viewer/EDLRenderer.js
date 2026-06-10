@@ -34,14 +34,14 @@ export class EDLRenderer{
 			magFilter: THREE.NearestFilter,
 			format: THREE.RGBAFormat,
 			type: THREE.FloatType,
-			depthTexture: new THREE.DepthTexture(undefined, undefined, THREE.UnsignedIntType)
+			depthTexture: new THREE.DepthTexture()
 		});
 
 		this.rtRegular = new THREE.WebGLRenderTarget(1024, 1024, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
 			format: THREE.RGBAFormat,
-			depthTexture: new THREE.DepthTexture(undefined, undefined, THREE.UnsignedIntType)
+			depthTexture: new THREE.DepthTexture()
 		});
 	};
 

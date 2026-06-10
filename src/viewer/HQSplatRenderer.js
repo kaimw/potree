@@ -44,15 +44,14 @@ export class HQSplatRenderer{
 			magFilter: THREE.NearestFilter,
 			format: THREE.RGBAFormat,
 			type: THREE.FloatType,
-			depthTexture: new THREE.DepthTexture(undefined, undefined, THREE.UnsignedIntType)
+			depthTexture: new THREE.DepthTexture()
 		});
 
 		this.rtAttribute = new THREE.WebGLRenderTarget(1024, 1024, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
 			format: THREE.RGBAFormat,
-			type: THREE.FloatType,
-			depthTexture: this.rtDepth.depthTexture,
+			type: THREE.FloatType
 		});
 
 		this.initialized = true;
@@ -295,8 +294,8 @@ export class HQSplatRenderer{
 			}
 
 			normalizationMaterial.uniforms.uWeightMap.value = this.rtAttribute.texture;
-			normalizationMaterial.uniforms.uDepthMap.value = this.rtAttribute.depthTexture;
-			
+			normalizationMaterial.uniforms.uDepthMap.value = this.rtDepth.depthTexture;
+
 			Utils.screenPass.render(viewer.renderer, normalizationMaterial);
 		}
 

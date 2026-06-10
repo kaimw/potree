@@ -80,6 +80,7 @@ let shaders = [
 gulp.task('webserver', gulp.series(async function() {
 	server = connect.server({
 		port: 1234,
+		host: '0.0.0.0',
 		https: false,
 	});
 }));
