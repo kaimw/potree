@@ -5,6 +5,7 @@ import {Renderer} from "../PotreeRenderer.js";
 import {PotreeRenderer} from "./PotreeRenderer.js";
 import {EDLRenderer} from "./EDLRenderer.js";
 import {HQSplatRenderer} from "./HQSplatRenderer.js";
+import {WebGPURenderer} from "../webgpu/WebGPURenderer.js";
 import {Scene} from "./Scene.js";
 import {ClippingTool} from "../utils/ClippingTool.js";
 import {TransformationTool} from "../utils/TransformationTool.js";
@@ -161,8 +162,10 @@ export class Viewer extends EventDispatcher{
 
 		this.potreeRenderer = null;
 		this.edlRenderer = null;
+		this.webgpuRenderer = null;
 		this.renderer = null;
 		this.pRenderer = null;
+		this.renderBackend = args.renderBackend || 'webgl';
 
 		this.scene = null;
 		this.sceneVR = null;
@@ -626,6 +629,33 @@ export class Viewer extends EventDispatcher{
 
 	getHQEnabled () {
 		return this.useHQ;
+	};
+
+	setRenderBackend(value) {
+		const validBackends = ['auto', 'webgl', 'webgpu'];
+		if (validBackends.indexOf(value) === -1) {
+			console.warn(`Unsupported render backend '${value}', falling back to auto.`);
+			value = 'auto';
+		}
+
+		const useWebGPU = (value === 'webgpu' || (value === 'auto' && Features.WEBGPU.isSupported()));
+
+		if (this.renderBackend !== value) {
+			this.renderBackend = value;
+			this.dispatchEvent({'type': 'render_backend_changed', 'viewer': this});
+		}
+
+		if (this.webgpuRenderer && this.webgpuRenderer.gpuCanvas) {
+			this.webgpuRenderer.gpuCanvas.style.display = useWebGPU ? '' : 'none';
+		}
+
+		if (value === 'webgpu' && this.webgpuRenderer) {
+			this.webgpuRenderer.init().catch(() => {});
+		}
+	};
+
+	getRenderBackend () {
+		return this.renderBackend;
 	};
 
 	setEDLRadius (value) {
@@ -1107,6 +1137,16 @@ export class Viewer extends EventDispatcher{
 			this.setBackground(value);
 		}
 
+		if (Utils.getParameterByName('backend')) {
+			let value = Utils.getParameterByName('backend');
+			this.setRenderBackend(value);
+		}
+
+		if (Utils.getParameterByName('minNodeSize')) {
+			let value = parseFloat(Utils.getParameterByName('minNodeSize'));
+			this.setMinNodeSize(value);
+		}
+
 		// if(Utils.getParameterByName("elevationRange")){
 		//	let value = Utils.getParameterByName("elevationRange");
 		//	value = value.replace("[", "").replace("]", "");
@@ -1455,6 +1495,7 @@ export class Viewer extends EventDispatcher{
 		this.renderArea.appendChild(this.renderer.domElement);
 		this.renderer.domElement.tabIndex = '2222';
 		this.renderer.domElement.style.position = 'absolute';
+		this.renderer.domElement.style.zIndex = '1';
 		this.renderer.domElement.addEventListener('mousedown', () => {
 			this.renderer.domElement.focus();
 		});
@@ -1908,6 +1949,21 @@ export class Viewer extends EventDispatcher{
 	}
 
 	getPRenderer(){
+		const useWebGPU = (this.renderBackend === 'webgpu' || (this.renderBackend === 'auto' && Features.WEBGPU.isSupported()));
+
+		if (this.webgpuRenderer && this.webgpuRenderer.gpuCanvas) {
+			this.webgpuRenderer.gpuCanvas.style.display = useWebGPU ? '' : 'none';
+		}
+
+		if (useWebGPU) {
+			if (!this.webgpuRenderer) {
+				this.webgpuRenderer = new WebGPURenderer(this);
+				this.webgpuRenderer.init().catch(() => {});
+			}
+
+			return this.webgpuRenderer;
+		}
+
 		if(this.useHQ && Features.SHADER_SPLATS.isSupported()){
 			if (!this.hqRenderer) {
 				this.hqRenderer = new HQSplatRenderer(this);

@@ -667,6 +667,11 @@ export class Renderer {
 		gl.bindVertexArray(null);
 	}
 
+	clear() {
+		this.threeRenderer.setRenderTarget(null);
+		this.threeRenderer.clear(true, true, true);
+	}
+
 	traverse(scene) {
 
 		let octrees = [];

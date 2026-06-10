@@ -67,6 +67,11 @@ export const Features = (function () {
 			}
 
 		},
+		WEBGPU: {
+			isSupported: function () {
+				return typeof navigator !== 'undefined' && typeof navigator.gpu !== 'undefined' && typeof navigator.gpu.requestAdapter === 'function';
+			}
+		},
 		//WEBGL2: {
 		//	isSupported: function(){
 		//		return gl instanceof WebGL2RenderingContext;

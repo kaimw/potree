@@ -55,6 +55,48 @@
 			viewer.setLanguage('en');
 			$("#menu_appearance").next().show();
 			//viewer.toggleSidebar();
+
+			const webgpuSupported = !!(Potree.Features && Potree.Features.WEBGPU && Potree.Features.WEBGPU.isSupported());
+			const backendGroup = $(
+				'<li>' +
+					'<selectgroup id="render_backend_options">' +
+						'<option value="auto">Auto</option>' +
+						'<option value="webgl">WebGL</option>' +
+						'<option value="webgpu">WebGPU</option>' +
+					'</selectgroup>' +
+				'</li>'
+				);
+
+			$('#splat_quality_options').closest('li').before(backendGroup);
+			$('#render_backend_options').selectgroup({title: 'Render Backend'});
+
+			if (!webgpuSupported) {
+				$('#render_backend_options input[value=webgpu]').prop('disabled', true);
+			}
+
+			const setBackend = (value) => {
+				viewer.setRenderBackend(value);
+			};
+
+			$('#render_backend_options input').click((event) => {
+				setBackend(event.target.value);
+			});
+
+			const currentBackend = viewer.getRenderBackend();
+			const backendInput = $('#render_backend_options input[value="' + currentBackend + '"]');
+			if (backendInput.length > 0) {
+				backendInput.prop('checked', true).trigger('change');
+				setBackend(currentBackend);
+			} else {
+				$('#render_backend_options input[value="webgl"]').prop('checked', true).trigger('change');
+				setBackend('webgl');
+			}
+
+			viewer.addEventListener('render_backend_changed', () => {
+				const backend = viewer.getRenderBackend();
+				$('#render_backend_options input').prop('checked', false);
+				$('#render_backend_options input[value="' + backend + '"]').prop('checked', true);
+			});
 		});
 		
 		// Lion
